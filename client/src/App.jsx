@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css"; // optional for Tailwind imports
 
-const socket = io("http://localhost:5000");
+const socket = io("https://reviewx2.onrender.com");
 
 function App() {
   const [sessionId] = useState(uuidv4());
