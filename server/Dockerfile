@@ -1,31 +1,86 @@
-# Use Python 3.11 slim image
+# ------------------------------
+# Base Python image
+# ------------------------------
 FROM python:3.11-slim
 
-# Install dependencies for Chrome
+# ------------------------------
+# Install system dependencies for Chrome & Node
+# ------------------------------
 RUN apt-get update && apt-get install -y \
-    wget unzip gnupg curl xvfb \
-    fonts-liberation libnss3 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 \
-    libxtst6 libxrandr2 libasound2 libatk1.0-0 libcups2 libxss1 libgtk-3-0 \
-    libglib2.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 \
+    wget \
+    unzip \
+    curl \
+    gnupg \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    git \
+    build-essential \
+    --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb || apt-get -f install -y
-RUN rm google-chrome-stable_current_amd64.deb
+# ------------------------------
+# Install Google Chrome
+# ------------------------------
+RUN wget -q -O google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt install -y ./google-chrome.deb \
+    && rm google-chrome.deb
 
-# Set working directory
+# Set Chrome binary path
+ENV CHROME_BIN=/usr/bin/google-chrome
+ENV PATH=$CHROME_BIN:$PATH
+
+# ------------------------------
+# Install Node.js for building React frontend
+# ------------------------------
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
+# ------------------------------
+# Setup app working directory
+# ------------------------------
 WORKDIR /app
 
-# Copy requirements and install
+# Copy Python requirements
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
+# ------------------------------
+# Copy backend & frontend code
+# ------------------------------
 COPY . .
+
+# ------------------------------
+# Build React frontend
+# ------------------------------
+WORKDIR /app/client
+RUN npm install
+RUN npm run build
+
+# ------------------------------
+# Serve React build via Flask
+# ------------------------------
+WORKDIR /app
 
 # Expose Flask port
 EXPOSE 5000
 
-# Run Flask app with eventlet
-CMD ["python", "app.py"]
+# ------------------------------
+# Production server
+# ------------------------------
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app", "--workers=1", "--threads=4"]

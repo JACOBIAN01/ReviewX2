@@ -1,31 +1,31 @@
 import eventlet
 eventlet.monkey_patch()
-import os
-from flask import Flask, render_template ,send_from_directory
 from flask_socketio import SocketIO, emit , join_room , leave_room
 from ReviewX import CodingalReviewer  
 import time
-
-
-app = Flask(__name__, static_folder='../client/dist')  # path to React build
-@app.route("/", defaults={'path': ''})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
-
+import os
 #Session_id -> reviewer instance -> Handle Multiple User
 sessions = {}
+
+app = Flask(__name__, static_folder='../client/dist')  # path to React build
 
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+from flask import Flask, send_from_directory
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+app = Flask(__name__, static_folder="client/dist")
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + "/" + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
+
+
+
 
 @socketio.on('start_review')
 def handle_review(data):
