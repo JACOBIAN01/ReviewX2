@@ -1,15 +1,24 @@
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template
+import os
+from flask import Flask, render_template ,send_from_directory
 from flask_socketio import SocketIO, emit , join_room , leave_room
 from ReviewX import CodingalReviewer  
 import time
 
 
+app = Flask(__name__, static_folder='../client/dist')  # path to React build
+@app.route("/", defaults={'path': ''})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
 #Session_id -> reviewer instance -> Handle Multiple User
 sessions = {}
 
-app = Flask(__name__, template_folder="templates")
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -67,5 +76,4 @@ def handle_cancel(data):
         socketio.emit("review_update", "⚠️ No active review to cancel.",room=session_id)
 
 if __name__ == '__main__':
-    print("http://localhost:5000/")
     socketio.run(app, host='0.0.0.0', port=5000, debug=False)
