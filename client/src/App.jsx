@@ -38,7 +38,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#FFE0C3] to-[#FFB6A3] p-5 flex flex-col items-center gap-8">
+    <div className="min-h-screen bg-gradient-to-r from-[#FFE0C3] to-[#FFB6A3] p-5 flex justify-center items-center gap-8">
       {/* Profile */}
       <div className="bg-white rounded-lg w-96 p-6 flex flex-col items-center border border-cyan-300 shadow-sm">
         <h2 className="text-xl font-semibold text-cyan-700 px-4 py-2 rounded-xl bg-gray-100">
